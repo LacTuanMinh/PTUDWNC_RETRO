@@ -1,0 +1,141 @@
+{
+  "users" : [ {
+    "password" : 987654321,
+    "userID" : 1,
+    "userName" : "Minh Lạc",
+	"boardList" : [1,2,3,4,5,6]
+  }, {
+    "password" : 123456789,
+    "userID" : 2,
+    "userName" : "Gia Lạc",
+	"boardList" : [7,8,9]
+  }, {
+    "password" : "abcdefghi",
+    "userID" : 3,
+    "userName" : "Donald Trump",
+	"boardList" : null
+  } ],
+  "boards" : [ {
+    "boardID" : 1,
+    "boardName" : "Retro for week 1",
+    "description" : "Desc for board 1"
+  }, {
+    "boardID" : 2,
+    "boardName" : "Retro for week 2",
+    "description" : "Desc for board 2"
+  }, {
+    "boardID" : 3,
+    "boardName" : "Retro for week 3",
+    "description" : "Desc for board 3"
+  }, {
+    "boardID" : 4,
+    "boardName" : "Retro for week 4",
+    "description" : "Desc for board 4"
+  }, {
+    "boardID" : 5,
+    "boardName" : "Retro for week 5",
+    "description" : "Desc for board 5"
+  }, {
+    "boardID" : 6,
+    "boardName" : "Retro for week 6",
+    "description" : "Desc for board 6"
+  }, {
+    "boardID" : 7,
+    "boardName" : "Things to do",
+    "description" : "Desc for board 7"
+  }, {
+    "boardID" : 8,
+    "boardName" : "Learn React",
+    "description" : "Desc for board 8"
+  }, {
+    "boardID" : 9,
+    "boardName" : "Learn English",
+    "description" : "Desc for board 9"
+  } ],
+  "columnType": [ {
+	"colTypeID": 1,
+	"colTypeName": "Went well"
+  }, {
+	"colTypeID": 2,
+	"typeName": "To improve"
+  }, {
+	"colTypeID": 3,
+	"colTypeName": "Action items"
+  } ],
+  "tags": [ {
+	"tagID": 1,
+	"colTypeID": 1,
+	"boardID": 1,
+	"tagContent": "Solved !!!"
+  }, {
+	"tagID": 2,
+	"colTypeID": 2,
+	"boardID": 1,
+	"tagContent": "Failed !!!"
+  }, {
+	"tagID": 3,
+	"colTypeID": 3,
+	"boardID": 1,
+	"tagContent": "Warm up !!!"
+  }, {
+	"tagID": 4,
+	"colTypeID": 1,
+	"boardID": 2,
+	"tagContent": "Passed !!!"
+  }, {
+	"tagID": 5,
+	"colTypeID": 2,
+	"boardID": 2,
+	"tagContent": "Flopped !!!"
+  }, {
+	"tagID": 6,
+	"colTypeID": 3,
+	"boardID": 2,
+	"tagContent": "Getting started !!!"
+  }, {
+	"tagID": 7,
+	"colTypeID": 1,
+	"boardID": 8,
+	"tagContent": "React state, class/function component"
+  }, {
+	"tagID": 8,
+	"colTypeID": 1,
+	"boardID": 8,
+	"tagContent": "React state, class/function component"
+  }, {
+	"tagID": 9,
+	"colTypeID": 3,
+	"boardID": 8,
+	"tagContent": "React hook"
+  }, {
+	"tagID": 10,
+	"colTypeID": 1,
+	"boardID": 9,
+	"tagContent": "Make vs Do"
+  }, {
+	"tagID": 11,
+	"colTypeID": 1,
+	"boardID": 9,
+	"tagContent": "Verb tense"
+  }, {
+	"tagID": 12,
+	"colTypeID": 3,
+	"boardID": 9,
+	"tagContent": "Collocation"
+  }, {
+	"tagID": 13,
+	"colTypeID": 3,
+	"boardID": 9,
+	"tagContent": "Phrasal verb"
+  }, {
+	"tagID": 14,
+	"colTypeID": 2,
+	"boardID": 9,
+	"tagContent": "Preposition"
+  }, {
+	"tagID": 15,
+	"colTypeID": 3,
+	"boardID": 9,
+	"tagContent": "Write an essay"
+  } ]
+}
