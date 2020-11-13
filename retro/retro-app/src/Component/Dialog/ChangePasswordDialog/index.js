@@ -67,7 +67,7 @@ export default function FormDialog() {
             }
         }).catch(err => {
             console.error(err);
-            alert('Error logging in please try again');
+            alert('Error change password please try again');
         });
     };
 

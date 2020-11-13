@@ -71,7 +71,7 @@ export default function Board(props) {
                         </Typography>
                     </CardContent>
                     <CardActions>
-                        <Button style={{ fontSize: 7 }} onClick={() => redirectToDetail()} variant="outlined" size="small" color="secondary"> View detail </Button>
+                        <Button style={{ fontSize: '13px' }} onClick={() => redirectToDetail()} variant="outlined" size="medium" color="secondary"> View detail </Button>
                         <RemoveBoardDialog removeBoard={(id) => props.removeBoard(id)} align="right" boardID={props.board.boardID} boardName={props.board.boardName} />
                     </CardActions>
                     <Button

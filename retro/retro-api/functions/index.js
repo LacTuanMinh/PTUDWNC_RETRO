@@ -10,6 +10,9 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const passportJWT = require('passport-jwt');
 const utils = require('./utils/utils');
+const app = express();
+// app.use(cors());
+app.use(cors({ origin: '*' }));
 
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
@@ -34,8 +37,6 @@ passport.use(strategy);// use the strategy
 // const usersRouter = require('./routes/users');
 
 // initialize passport with express
-const app = express();
-app.use(cors());
 app.use(passport.initialize());
 
 // view engine setup
@@ -76,14 +77,14 @@ app.post('/signIn', (req, res) => {
                 //bcrypt.compareSync(req.body.password, child.val().password)
                 if (bcrypt.compareSync(req.body.password, child.val().password)) {
                     const token = jwt.sign({ id: child.val().userID }, jwtOptions.secretOrKey);
-                    res.status(200).send({ mesg: "Signed in", token: token, id: child.val().userID, name: child.val().userName });
+                    return res.status(200).send({ mesg: "Signed in", token: token, id: child.val().userID, name: child.val().userName });
                 } else {
-                    res.status(401).send({ mesg: "Wrong password! Check again" });
+                    return res.status(401).send({ mesg: "Wrong password! Check again" });
                 }
             });
         } else {
             // console.log("không tồn tại");
-            res.status(401).json({ mesg: 'No such user found' });
+            return res.status(401).json({ mesg: 'No such user found' });
         }
     });
 });

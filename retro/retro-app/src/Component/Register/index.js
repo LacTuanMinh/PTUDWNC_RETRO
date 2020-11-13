@@ -106,7 +106,7 @@ export default function Register() {
                 // stay this site
             }
         })
-    })
+    }, [])
 
     return (
         <Container component="main" maxWidth="xs">

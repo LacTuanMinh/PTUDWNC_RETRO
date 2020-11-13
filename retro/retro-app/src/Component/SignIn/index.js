@@ -70,7 +70,7 @@ export default function SignIn() {
                 // stay this site
             }
         })
-    })
+    }, [])
 
     const onSubmit = (event) => {
         event.preventDefault();

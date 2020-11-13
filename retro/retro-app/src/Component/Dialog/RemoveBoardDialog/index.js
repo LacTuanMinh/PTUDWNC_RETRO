@@ -90,14 +90,14 @@ export default function CustomizedDialogs({ boardID, boardName, removeBoard }) {
             }
         }).catch(err => {
             console.error(err);
-            alert('Error logging in please try again');
+            alert('Error remove board please try again');
         });
         setOpen(false);
     };
 
     return (
         <div>
-            <Button style={{ fontSize: 6 }} size="small" color="primary" onClick={handleClickOpen}>
+            <Button style={{ fontSize: 13 }} size="small" color="primary" onClick={handleClickOpen}>
                 Delete board
             </Button>
             <Dialog fullWidth onClose={handleClose} aria-labelledby="customized-dialog-title" open={open}>

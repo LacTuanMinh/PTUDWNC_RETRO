@@ -66,7 +66,7 @@ export default function FormDialog({ addBoard }) {
             }
         }).catch(err => {
             console.error(err);
-            alert('Error logging in please try again');
+            alert('Error create board please try again');
         });
     };
 

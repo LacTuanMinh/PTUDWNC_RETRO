@@ -53,7 +53,7 @@ export default function NavBar({ userName }) {
                             {
                                 userName ?
                                     <>
-                                        <Button variant='h2' style={{ ...smMargin, textTransform: 'none' }} onClick={() => handleProfileClick()} variant="contained" color="secondary" >
+                                        <Button style={{ ...smMargin, textTransform: 'none' }} onClick={() => handleProfileClick()} variant="contained" color="secondary" >
                                             <AccountCircleIcon style={smMargin} /><b> {userName}</b>
                                         </Button>
                                         <Button style={{ ...smMargin, textTransform: 'none' }} onClick={() => handleLogout()} variant="contained" m={10} color="secondary"><b>Log out</b></Button>
