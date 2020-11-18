@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory } from "react-router-dom";
-// import AppBar from '@material-ui/core/AppBar';
 import Typography from '@material-ui/core/Typography';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
-// import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
@@ -13,10 +11,8 @@ import Link from '@material-ui/core/Link';
 import BoardList from '../BoardList/index';
 import NavBar from '../NavBar/index'
 import CreateBoardDialog from '../Dialog/CreateBoardDialog/index'
-import { CardHeader, Button, SnackbarContent } from '@material-ui/core';
+import { CardHeader, SnackbarContent } from '@material-ui/core';
 import Snackbar from '@material-ui/core/Snackbar';
-import IconButton from '@material-ui/core/IconButton';
-import CloseIcon from '@material-ui/icons/Close';
 
 const useStyles = makeStyles((theme) => ({
   icon: {

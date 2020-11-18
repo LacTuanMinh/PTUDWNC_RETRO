@@ -76,6 +76,7 @@ export default function Board(props) {
                     </CardActions>
                     <Button
                         // color="secondary"
+                        title="Click to get URL"
                         variant="contained"
                         onClick={() => handleCopyURL()}
                         style={{
@@ -86,14 +87,14 @@ export default function Board(props) {
                             alignContent: 'center',
                             fontSize: '4',
                             borderRadius: '50%',
-                            height: '70px',
-                            width: '72px',
+                            height: '65px',
+                            width: '67px',
                             color: '#FFF',
                             backgroundImage: 'linear-gradient(to right, #24C6DC 0%, #514A9D 100%)',
                             boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)',
                         }}
                     >
-                        <LinkIcon fontSize='large' style={{ marginRight: '2' }} /> <b>URL</b>
+                        <LinkIcon fontSize='large' style={{ marginRight: '2' }} />
                     </Button>
                 </Card>
             </Grid>

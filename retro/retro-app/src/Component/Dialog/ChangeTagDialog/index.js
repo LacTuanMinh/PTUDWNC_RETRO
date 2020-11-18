@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Button from '@material-ui/core/Button';
-// import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Typography from '@material-ui/core/Typography';
 import { isBlankString } from '../../../utils/index'
 import EditIcon from '@material-ui/icons/Edit';
 
@@ -76,13 +73,14 @@ export default function ChangeTagDialog({ tags, tag, setTags }) {
                 </DialogTitle> */}
                 <DialogContent>
                     <textarea
+
                         value={newTagContent}
                         autoFocus
                         margin="dense"
                         label="Tag Content"
                         rows="4"
                         onChange={(event) => setNewTagContent(event.target.value)}
-                        style={{ fontSize: '16px', overflow: 'hidden', overflowWrap: 'break-word', resize: 'none', width: '99%', height: 'auto' }}
+                        style={{ overflowY: 'scroll', fontSize: '16px', overflowWrap: 'break-word', resize: 'none', width: '99%', height: 'auto' }}
                     />
                 </DialogContent>
                 <DialogActions>

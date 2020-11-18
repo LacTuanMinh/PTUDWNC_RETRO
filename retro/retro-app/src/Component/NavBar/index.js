@@ -60,9 +60,7 @@ export default function NavBar({ userName }) {
                                     </>
                                     :
                                     <Button onClick={() => handleLogin()} style={{ ...smMargin, textTransform: 'none' }} variant="contained" m={10} color="secondary" ><b>Sign in</b></Button>
-
                             }
-
                         </Grid>
                     </Grid>
                 </Toolbar>

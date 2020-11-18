@@ -7,7 +7,6 @@ import Register from './Component/Register/index';
 import SignIn from './Component/SignIn/index';
 import Profile from './Component/Profile/index';
 import BoardContent from './Component/BoardContent'
-// import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
   // <React.StrictMode>

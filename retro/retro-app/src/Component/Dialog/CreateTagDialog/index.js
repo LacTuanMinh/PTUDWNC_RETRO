@@ -80,7 +80,7 @@ export default function CreateTagDialog({ boardID, colTypeID, tags, setTags }) {
                         label="Tag Content"
                         rows="4"
                         onChange={(event) => setTagContent(event.target.value)}
-                        style={{ fontSize: '16px', overflow: 'hidden', overflowWrap: 'break-word', resize: 'none', width: '99%', height: 'auto' }}
+                        style={{ fontSize: '16px', overflowY: 'scroll', overflowWrap: 'break-word', resize: 'none', width: '99%', height: 'auto' }}
                     />
                     {/* <Typography component="h2"> Description: </Typography> */}
                 </DialogContent>

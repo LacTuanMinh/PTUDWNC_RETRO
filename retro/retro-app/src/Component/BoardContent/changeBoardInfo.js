@@ -95,13 +95,12 @@ export default function Inputs({ board, setBoard }) {
         <div style={{ display: 'inline-block', marginTop: 3, marginBottom: 5, marginLeft: 40 }} className={classes.root} autoComplete="off">
             <div style={{ float: 'left', margin: '20px' }}>
                 <Input
-                    style={{ width: 'auto' }}
+                    style={{ width: 'auto', fontSize: 25, fontWeight: 'bold' }}
                     required
                     value={newBoardName}
                     onChange={(event) => { setNewBoardName(event.target.value) }}
                     placeholder="Board name"
                     readOnly={nameEditorDisplay === false}
-                    style={{ fontSize: 25, width: 'auto', fontWeight: 'bold' }}
                 />
                 {
                     nameEditorDisplay === false
