@@ -7,7 +7,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 // import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import SaveIcon from '@material-ui/icons/Save';
-import { isBlankString } from '../../../utils/index'
+import { isBlankString } from '../../../utils/index'; //'../../../utils/index'
 
 export default function FormDialog() {
     const [open, setOpen] = useState(false);
@@ -42,7 +42,7 @@ export default function FormDialog() {
 
         const userID = localStorage.getItem('userID');
         const token = window.localStorage.getItem('jwtToken')
-        fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/profile/password/${userID}`, {
+        fetch(`http://localhost:8000/profile/password/${userID}`, {
             method: 'POST',
             body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
             headers: {

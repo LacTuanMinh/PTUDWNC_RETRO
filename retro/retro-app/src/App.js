@@ -5,7 +5,10 @@ import DashBoard from './Component/DashBoard/index';
 import Register from './Component/Register/index';
 import SignIn from './Component/SignIn/index';
 import Profile from './Component/Profile/index';
-import BoardContent from './Component/BoardContent'
+import BoardContent from './Component/BoardContent';
+import TimeCounter from './Component/Realtime/index';
+
+
 
 export default function App() {
     return (
@@ -20,6 +23,7 @@ export default function App() {
                 <Route path="/dashboard" exact component={DashBoard} />
                 <Route path="/profile" exact component={Profile} />
                 <Route path="/dashboard/boardcontent/:boardid" exact component={BoardContent} />
+                {/* <Route path="/timemachine" exact component={TimeCounter} /> */}
             </Switch>
         </Router>
         // </React.StrictMode >

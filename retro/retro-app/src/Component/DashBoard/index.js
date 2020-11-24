@@ -87,7 +87,7 @@ export default function Dashboard() {
     const jwtToken = window.localStorage.getItem('jwtToken');
     const userID = window.localStorage.getItem('userID');
     const token = "Bearer " + jwtToken;
-    fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/boards/${userID}`, {
+    fetch(`http://localhost:8000/boards/${userID}`, {
       method: 'GET',
       headers: {
         Authorization: token,

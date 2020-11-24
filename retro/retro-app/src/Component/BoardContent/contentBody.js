@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardHeader from '@material-ui/core/CardHeader';
+import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
@@ -10,6 +11,7 @@ import CreateTagDialog from '../Dialog/CreateTagDialog';
 import ChangeTagDialog from '../Dialog/ChangeTagDialog';
 import RemoveTagDialog from '../Dialog/RemoveTagDialog';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import socketIOClient from "socket.io-client";
 
 const useStyles = makeStyles((theme) => ({
     '@global': {
@@ -61,6 +63,7 @@ const useStyles = makeStyles((theme) => ({
 
 }));
 
+const socket = socketIOClient("http://localhost:8000");
 
 // this Tag component is used in Body component below
 function Tag({ tags, tag, index, setTags, color }) { // tags: toàn bộ tag cũa board
@@ -79,9 +82,9 @@ function Tag({ tags, tag, index, setTags, color }) { // tags: toàn bộ tag cũ
                             {tag.tagContent}
                         </div>
 
-                        <div style={{ float: 'right', width: '13%' }}>
-                            <ChangeTagDialog tag={tag} tags={tags} setTags={(tag) => setTags(tag)} />
-                            <RemoveTagDialog tag={tag} tags={tags} setTags={(tag) => setTags(tag)} />
+                        <div style={{ float: 'left', width: '13%' }}>
+                            <ChangeTagDialog tag={tag} tags={tags} setTags={(tag) => setTags(tag)} socket={socket} />
+                            <RemoveTagDialog tag={tag} tags={tags} setTags={(tag) => setTags(tag)} socket={socket} />
                         </div>
                     </div>
                 </div>
@@ -94,19 +97,45 @@ export default function Body({ boardID, columnType, tags, setTags }) {
     const classes = useStyles();
     const [wentWell, setWentWell] = useState([]);
     const [toImprove, setToImprove] = useState([]);
-    const [actionItems, setActionItems] = useState([])
+    const [actionItems, setActionItems] = useState([]);
+    // let socket;
 
     useEffect(() => {
+        socket.on(`server_AfterDragDrop${boardID}`, allTags => {
+            console.log(boardID);
+            setTags(allTags)
+        });
+
+    }, [boardID]);
+
+    useEffect(() => {
+        socket.on(`server_RemoveTag${boardID}`, (body) => {
+            const { tagIDToRemove, affectedTags } = body
+            console.log(tagIDToRemove);
+            console.log(affectedTags);
+
+            const affectedTagsID = affectedTags.map(item => item.tagID);
+            affectedTagsID.splice(affectedTags.length, 0, tagIDToRemove);
+            console.log(affectedTagsID);
+
+            // const tagsCopy = tags.filter(tag => !affectedTagsID.includes(tag.tagID));
+            // setTags(tagsCopy);
+
+            setTags(tags => {
+                const tagsCopy = tags.filter(tag => !affectedTagsID.includes(tag.tagID));
+                return tagsCopy.concat(affectedTags);
+            });
+
+        });
+    }, [boardID])
+
+    useEffect(() => {
+
         // console.log(tags) // [{},{},...]
         // note: setstate in loop may overwrite previous value so 
         // https://stackoverflow.com/questions/63199884/update-array-state-on-react-using-hooks-replaces-instead-of-concat
         // ex :setWentWell(tagsCopy =>
         //             tagsCopy.concat([{ ...element }]).sort((o1, o2) => o1.order - o2.order));
-
-        //reset lại trước khi re-render, nếu ko record cũ bị lặp lại
-        // setWentWell([]);
-        // setToImprove([]);
-        // setActionItems([]);
 
         setWentWell(tags
             .filter(tag => tag.colTypeID === 1)
@@ -116,24 +145,20 @@ export default function Body({ boardID, columnType, tags, setTags }) {
         setActionItems(tags.filter(tag => tag.colTypeID === 3).sort((o1, o2) => o1.order - o2.order));
     }, [tags]);
 
+
     const handleOnDragEnd = async (result) => {
         if (!result.destination)
             return;
-
         if (result.source.index === result.destination.index && result.source.droppableId === result.destination.droppableId) {
             console.log('Không bị thay đổi');
             return;
         }
-        // console.log(result);
 
         const oldOrder = result.source.index;
         const newOrder = result.destination.index;
         const oldType = +result.source.droppableId;
         const newType = +result.destination.droppableId;
         let tagToChange;
-
-        // console.log(oldOrder);
-        // console.log(newOrder);
 
         if (oldType === 2) {
             tagToChange = toImprove[oldOrder];
@@ -171,8 +196,6 @@ export default function Body({ boardID, columnType, tags, setTags }) {
         } else {
             const tagsOfOldColumn = tags.filter((tag) => tag.colTypeID === oldType && tag.order > oldOrder).sort((o1, o2) => o1.order - o2.order);
             const tagsOfNewColumn = tags.filter((tag) => tag.colTypeID === newType && tag.order >= newOrder).sort((o1, o2) => o1.order - o2.order);
-            // console.log(tagsOfOldColumn);
-            // console.log(tagsOfNewColumn);
 
             tagsModified = tags.slice().map(tag => {
 
@@ -189,19 +212,20 @@ export default function Body({ boardID, columnType, tags, setTags }) {
             })
         }
         setTags(tagsModified);
-        // console.log(tagsModified);
 
-        const res = await fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/boards/boardcontent/dragdrop/${boardID}`, {
-            method: 'POST',
-            body: JSON.stringify({ tags: tagsModified.filter(e => e.colTypeID === oldType || e.colTypeID === newType) }),
-            headers: {
-                'Content-Type': 'application/json',
-                // Authorization: `Bearer ${token}`
-            }
-        });
-        if (res.status !== 200) {
-            alert('Error')
-        }
+        socket.emit("client_DragDrop", { tags: tagsModified.filter(e => e.colTypeID === oldType || e.colTypeID === newType) });
+
+        // const res = await fetch(`http://localhost:8000/boards/boardcontent/dragdrop/${boardID}`, {
+        //     method: 'POST',
+        //     body: JSON.stringify({ tags: tagsModified.filter(e => e.colTypeID === oldType || e.colTypeID === newType) }),
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //         // Authorization: `Bearer ${token}`
+        //     }
+        // });
+        // if (res.status !== 200) {
+        //     alert('Error')
+        // }
     }
 
     return (
@@ -224,12 +248,13 @@ export default function Body({ boardID, columnType, tags, setTags }) {
                                                 setTags={(tags) => setTags(tags)}
                                                 boardID={boardID}
                                                 tags={tags}
+                                                socket={socket}
                                             />
                                         </div>}
                                     className={classes.cardHeader}
                                 />
                                 <CardContent>
-                                    <Droppable droppableId={"1"}>
+                                    <Droppable droppableId="1">
                                         {(provided) => (
                                             <ul className="1" {...provided.droppableProps} ref={provided.innerRef}>
                                                 {
@@ -261,6 +286,8 @@ export default function Body({ boardID, columnType, tags, setTags }) {
                                                 setTags={(tags) => setTags(tags)}
                                                 boardID={boardID}
                                                 tags={tags}
+                                                socket={socket}
+
                                             />
                                         </div>
                                     }
@@ -305,6 +332,8 @@ export default function Body({ boardID, columnType, tags, setTags }) {
                                                 tags={tags}
                                                 setTags={(tags) => setTags(tags)}
                                                 boardID={boardID}
+                                                socket={socket}
+
                                             />
                                         </div>
                                     }
@@ -339,6 +368,28 @@ export default function Body({ boardID, columnType, tags, setTags }) {
                     </Grid>
                 </DragDropContext>
             </Container>
+            <footer className={classes.footer} style={{ marginTop: '50px', marginBottom: '50px' }}>
+                <Typography variant="h6" align="center" gutterBottom>
+                    My Retro
+                </Typography>
+                <Typography variant="subtitle1" align="center" color="textSecondary" component="p">
+                    Contact: lactuanminh2121@gmail.com!
+                </Typography>
+                <Copyright />
+            </footer>
         </React.Fragment >
+    );
+}
+
+function Copyright() {
+    return (
+        <Typography variant="body2" color="textSecondary" align="center">
+            {'Copyright © '}
+            <Link color="inherit" href="https://material-ui.com/">
+                Your Website
+        </Link>{' '}
+            {new Date().getFullYear()}
+            {'.'}
+        </Typography>
     );
 }

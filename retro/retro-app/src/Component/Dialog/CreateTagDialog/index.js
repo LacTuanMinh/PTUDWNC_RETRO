@@ -1,20 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '@material-ui/core/Button';
-// import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Typography from '@material-ui/core/Typography';
-import { isBlankString } from '../../../utils/index'
 import AddIcon from '@material-ui/icons/Add';
 import { IconButton } from '@material-ui/core';
+import { isBlankString } from '../../../utils/index';
 
 
-export default function CreateTagDialog({ boardID, colTypeID, tags, setTags }) {
+export default function CreateTagDialog({ boardID, colTypeID, tags, setTags, socket }) {
     const [open, setOpen] = useState(false);
     const [tagContent, setTagContent] = useState("");
-    // const [description, setDiscription] = useState("");
+
+    useEffect(() => {
+        socket.on(`server_AddTag${boardID}${colTypeID}`, newTag => {
+            // console.log(newTag);
+            setTags(tags => tags.slice().concat([{ ...newTag }]));
+            // return (() => socket.close());
+        });
+    }, [boardID, colTypeID])
 
     const handleClickOpen = () => {
         setOpen(true);
@@ -34,27 +40,30 @@ export default function CreateTagDialog({ boardID, colTypeID, tags, setTags }) {
             alert('Tag content cannot be empty');
             return;
         }
-        const res = await fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/boards/boardcontent/addtag/${boardID}`, {
-            method: 'POST',
-            body: JSON.stringify({ tagContent, colTypeID }),
-            headers: {
-                'Content-Type': 'application/json',
-                // Authorization: `Bearer ${token}`
-            }
-        });
 
-        const result = await res.json();
+        socket.emit("client_AddTag", { tagContent, colTypeID, boardID });
+        handleClose();
 
-        if (res.status === 200) {
-            console.log(result.newTag);
-            const tagsCopy = tags.slice();
-            setTags(tagsCopy => tagsCopy.concat([{ ...result.newTag }]));
-            handleClose();
-        } else if (res.status === 400) { // blank content
-            alert(result.mesg)
-        } else if (res.status === 500) { //server error
-            alert(result.mesg);
-        }
+        // const res = await fetch(`http://localhost:8000/boards/boardcontent/addtag/${boardID}`, {
+        //     method: 'POST',
+        //     body: JSON.stringify({ tagContent, colTypeID }),
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //         // Authorization: `Bearer ${token}`
+        //     }
+        // });
+        // const result = await res.json();
+
+        // if (res.status === 200) {
+        //     console.log(result.newTag);
+        //     const tagsCopy = tags.slice();
+        //     setTags(tagsCopy => tagsCopy.concat([{ ...result.newTag }]));
+        // handleClose();
+        // } else if (res.status === 400) { // blank content
+        //     alert(result.mesg)
+        // } else if (res.status === 500) { //server error
+        //     alert(result.mesg);
+        // }
     }
 
     return (

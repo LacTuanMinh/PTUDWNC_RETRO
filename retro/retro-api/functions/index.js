@@ -13,18 +13,18 @@ const passportJWT = require('passport-jwt');
 const FacebookStrategy = require('passport-facebook').Strategy;
 const utils = require('./utils/utils');
 const app = express();
+const http = require('http');
+const socketIo = require("socket.io");
 
-
-app.use(session({
-    resave: false,
-    saveUninitialized: true,
-    secret: 'SECRET'
-}));
+// app.use(session({
+//     resave: false,
+//     saveUninitialized: true,
+//     secret: 'SECRET'
+// }));
 
 // initialize passport with express
 app.use(passport.initialize());
 app.use(passport.session());
-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
@@ -32,23 +32,16 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
-
-// passport.serializeUser(function (user, cb) {
-//     cb(null, user);
-// });
-
-// passport.deserializeUser(function (obj, cb) {
-//     cb(null, obj);
-// });
-
 app.use(cors({ origin: '*' }));
+
+// middleware check firebase has been init-ed
+
 
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
 const jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = utils.secretKey;
-
 // create jwt strategy
 let JWT_strategy = new JwtStrategy(jwtOptions, (jwt_payload, next) => {
     console.log('You access jwtstrategy. userID : ' + jwt_payload.id);
@@ -62,81 +55,167 @@ let JWT_strategy = new JwtStrategy(jwtOptions, (jwt_payload, next) => {
 });
 // use the JWT strategy
 passport.use(JWT_strategy);
+passport.serializeUser(function (user, cb) {
+    cb(null, user);
+});
+passport.deserializeUser(function (obj, cb) {
+    cb(null, obj);
+});
 
-// create and use the facebook strategy
-// passport.use(new FacebookStrategy({
-//     clientID: utils.facebook_key,
-//     clientSecret: utils.facebook_secret,
-//     callbackURL: utils.callback_url,
-//     profileFields: ['id', 'displayName']
-// }, function (accessToken, refreshToken, profile, done) {
-//     console.log("facebook strategy " + accessToken);
-//     console.log('profile :'); console.log(profile);
+//socket
+const server = http.Server(app);
+const io = socketIo(server, {
+    cors: {
+        origin: "*",
+    }
+});
 
-//     // User.findOne({ 'facebook.id' : profile.id }, function(err, user) {
-//     //     if (err)
-//     //         return done(err);
-//     //     // if the user is found, then log them in
-//     //     if (user) {
-//     //         return done(null, user); 
-//     //     } else {
-//     //         // if there is no user found with that facebook id, create them
-//     //         var newUser            = new User();
-//     //         // set all of the facebook information in our user model
-//     //         newUser.facebook.id    = profile.id; // set the users facebook id                   
-//     //         newUser.facebook.token = token; // we will save the token that facebook provides to the user                    
-//     //         newUser.facebook.name  = profile.name.givenName + ' ' + profile.name.familyName; // look at the passport user profile to see how names are returned
-//     //         newUser.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
-//     //         // save our user to the database
-//     //         newUser.save(function(err) {
-//     //             if (err)
-//     //                 throw err;
-//     //             // if successful, return the new user
-//     //             return done(null, newUser);
-//     //         });
-//     //     }
+app.use(async (req, res, next) => {
+    if (!firebase.apps.length) {
+        await firebase.initializeApp(utils.apiConfig);
+    }
+    next();
+});
 
-//     // });
-//     return done(null, profile);
-// }
-// ));
+io.on("connection", (socket) => {
+    console.log("New client connected: ", socket.id);
+    // if (interval) {
+    //     clearInterval(interval);
+    // }
+    // interval = setInterval(() => getApiAndEmit(socket), 1000);
 
+    socket.on("client_DragDrop", async (body) => {
+        console.log("socket drag drop");
+        // console.log(body.tags);
+        const tags = body.tags;
+        tags.forEach(tag => {
+            const tagRef = firebase.database().ref().child(`tags/${tag.tagID}`);
+            tagRef.once('value', snapshot => {
+                // console.log(snapshot.val()); // {...}
+                snapshot.ref.update(tag)
+            });
+        });
+
+        const tagSnapshot = await firebase.database().ref().child('tags').orderByChild('boardID').equalTo(tags[0].boardID).once('value');
+        const allTags = Object.values((await tagSnapshot).val());
+        console.log(tags[0].boardID);
+        socket.broadcast.emit("server_AfterDragDrop" + tags[0].boardID, allTags);
+    });
+
+    socket.on("client_AddTag", (body) => {
+
+        // console.log("source : " + socket.id);
+        // server.getConnections(function (error, count) {
+        //     console.log('Total:' + count);
+        // });
+        // if (utils.isBlankString(req.body.tagContent)) {
+        //     return res.status(400).send({ mesg: 'Tag content cannot be empty' });
+        // }
+        const boardID = body.boardID;
+        const tagContent = body.tagContent;
+        const colTypeID = body.colTypeID;
+
+        const tagRef = firebase.database().ref().child('tags').orderByChild('boardID').equalTo(boardID);
+        tagRef.once('value', snapshot => {
+
+            let order = 0;
+
+            if (snapshot.val() !== null) {
+                const arrayTags = Object.values(snapshot.val());
+                const tagsOfCol = arrayTags.filter(tag => tag.colTypeID === colTypeID).sort((o1, o2) => o1.order - o2.order);
+                if (tagsOfCol.length !== 0)
+                    order = (tagsOfCol[tagsOfCol.length - 1]).order + 1;
+            }
+            const newTagRef = firebase.database().ref().child('tags');
+            const tagPusher = newTagRef.push();
+            const newTag = {
+                boardID,
+                tagContent,
+                colTypeID,
+                order
+            };
+            // thêm tag mới mà chưa có id
+            tagPusher.set(newTag).catch((err) => {
+                console.log(err);
+                // return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
+            });
+
+            // lấy key phát sinh set làm id của tag
+            newTagRef.child(tagPusher.key).update({ tagID: tagPusher.key }).then(() => {
+                newTag.tagID = tagPusher.key;
+                io.sockets.emit("server_AddTag" + boardID + colTypeID, newTag);
+                // return res.status(200).send({ mesg: "Add tag successfully", newTag });
+            }).catch((err) => {
+                console.log(err);
+                // return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
+            });
+        });
+    });
+
+    socket.on("client_EditTag", (body) => {
+
+        const tagID = body.tagID;
+        const tagContent = body.tagContent;
+        // const boardID = req.params.boardID;
+        // console.log(boardID);
+
+        const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
+        tagRef.once('value', snapshot => {
+
+            // console.log(snapshot.val());
+            // if (snapshot.val() === null)
+            //     return res.status(500).send({ mesg: 'Modify failed' });
+
+            snapshot.forEach(underSnap => { // only one child but need loop
+                // if (underSnap.val().boardID !== boardID)
+                //     return res.status(500).send({ mesg: 'Modify failed' });
+                underSnap.ref.update({ tagContent }).then(() => { });
+                io.sockets.emit("server_EditTag" + underSnap.val().tagID, tagContent)
+
+            });
+            // return res.status(200).send({ mesg: 'Modify successfully', tagContent });
+        })
+        // return 1;
+
+    })
+
+    socket.on("client_RemoveTag", (body) => {
+
+        // console.log(body);
+        const { tagIDToRemove, affectedTags, boardID } = body;
+        const tagRef = firebase.database().ref().child(`tags/${tagIDToRemove}`);
+        tagRef.once('value', snapshot => {
+
+            // console.log(snapshot.val());
+            snapshot.ref.remove().then(() => {
+                return null;
+            });
+
+        });
+
+        const affectedTagsCopy = affectedTags.map(tag => {
+            const tagRefForAffectedTags = firebase.database().ref().child(`tags/${tag.tagID}`);
+            tag.order = tag.order - 1;
+            tagRefForAffectedTags.once('value', snapshot => {
+                console.log(snapshot.val());
+                snapshot.ref.update(tag);
+            });
+            return tag;
+        })
+        io.sockets.emit("server_RemoveTag" + boardID, { tagIDToRemove, affectedTags: affectedTagsCopy });
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Client disconnected");
+        // socket.removeAllListeners('disconnect');
+        // io.removeAllListeners('connection');
+    });
+});
 
 
 app.get('/', (req, res) => {
     res.send('home');
 })
-
-// middleware check firebase has been init-ed
-app.use((req, res, next) => {
-    if (!firebase.apps.length) {
-        firebase.initializeApp(utils.apiConfig);
-    }
-    next();
-})
-
-// app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] })
-// );
-
-// app.get('/auth/facebook/callback',
-//     passport.authenticate('facebook', {
-//         successRedirect: '/account',
-//         // failureRedirect: '/signIn'
-//     }));
-
-// app.get('/account', isLoggedIn, (req, res) => {
-//     console.log(req.user);
-//     res.status(200).send(req.user);
-// });
-
-
-// function isLoggedIn(req, res, next) {
-//     if (req.isAuthenticated()) {
-//         console.log("you are facebook-authenticated");
-//         return next();
-//     }
-//     res.redirect('/authenticate')
-// }
 
 
 app.post('/signIn', (req, res) => {
@@ -222,9 +301,9 @@ app.get('/boards/boardcontent/:boardID', async (req, res) => {
     const colType = (await colTypeSnapshot).val();
 
 
-    console.log(board) // {...}
-    console.log(tags) // {{...},{...},...}
-    console.log(colType) // [{...},{...},...]
+    // console.log(board) // {...}
+    // console.log(tags) // {{...},{...},...}
+    // console.log(colType) // [{...},{...},...]
     return res.status(200).send({ board, tags: tags === null ? [] : Object.values(tags), columnType: colType });
 })
 
@@ -264,185 +343,100 @@ app.post('/boards/boardcontent/changedescription/:boardID', (req, res) => {
     return 1;
 })
 
-app.post('/boards/boardcontent/addtag/:boardID', (req, res) => {
-    // console.log(req.params.boardID);
-    // console.log(req.body);
+///   route này đã được xử lý trong socket
+// app.post('/boards/boardcontent/addtag/:boardID', (req, res) => {
+//     // console.log(req.params.boardID);
+//     // console.log(req.body);
 
-    if (utils.isBlankString(req.body.tagContent)) {
-        return res.status(400).send({ mesg: 'Tag content cannot be empty' });
-    }
+//     if (utils.isBlankString(req.body.tagContent)) {
+//         return res.status(400).send({ mesg: 'Tag content cannot be empty' });
+//     }
 
-    const boardID = req.params.boardID;
-    const tagContent = req.body.tagContent;
-    const colTypeID = req.body.colTypeID;
+//     const boardID = req.params.boardID;
+//     const tagContent = req.body.tagContent;
+//     const colTypeID = req.body.colTypeID;
 
-    const tagRef = firebase.database().ref().child('tags').orderByChild('boardID').equalTo(boardID);
-    tagRef.once('value', snapshot => {
-        // console.log(snapshot.val());
+//     const tagRef = firebase.database().ref().child('tags').orderByChild('boardID').equalTo(boardID);
+//     tagRef.once('value', snapshot => {
+//         // console.log(snapshot.val());
 
-        let order = 0;
+//         let order = 0;
 
-        if (snapshot.val() !== null) {
-            const arrayTags = Object.values(snapshot.val());
-            const tagsOfCol = arrayTags.filter(tag => tag.colTypeID === colTypeID).sort((o1, o2) => o1.order - o2.order);
-            if (tagsOfCol.length !== 0)
-                order = (tagsOfCol[tagsOfCol.length - 1]).order + 1;
-        }
-        // console.log(order);
-        const newTagRef = firebase.database().ref().child('tags');
-        const tagPusher = newTagRef.push();
-        const newTag = {
-            boardID,
-            tagContent,
-            colTypeID,
-            order
-        };
-        // thêm tag mới mà chưa có id
-        tagPusher.set(newTag).catch((err) => {
-            console.log(err);
-            return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
-        });
+//         if (snapshot.val() !== null) {
+//             const arrayTags = Object.values(snapshot.val());
+//             const tagsOfCol = arrayTags.filter(tag => tag.colTypeID === colTypeID).sort((o1, o2) => o1.order - o2.order);
+//             if (tagsOfCol.length !== 0)
+//                 order = (tagsOfCol[tagsOfCol.length - 1]).order + 1;
+//         }
+//         // console.log(order);
+//         const newTagRef = firebase.database().ref().child('tags');
+//         const tagPusher = newTagRef.push();
+//         const newTag = {
+//             boardID,
+//             tagContent,
+//             colTypeID,
+//             order
+//         };
+//         // thêm tag mới mà chưa có id
+//         tagPusher.set(newTag).catch((err) => {
+//             console.log(err);
+//             return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
+//         });
 
-        // lấy key phát sinh set làm id của tag
-        newTagRef.child(tagPusher.key).update({ tagID: tagPusher.key }).then(() => {
-            newTag.tagID = tagPusher.key;
-            return res.status(200).send({ mesg: "Add tag successfully", newTag });
-        }).catch((err) => {
-            console.log(err);
-            return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
-        });
-    });
-    return 1;
-})
+//         // lấy key phát sinh set làm id của tag
+//         newTagRef.child(tagPusher.key).update({ tagID: tagPusher.key }).then(() => {
+//             newTag.tagID = tagPusher.key;
+//             return res.status(200).send({ mesg: "Add tag successfully", newTag });
+//         }).catch((err) => {
+//             console.log(err);
+//             return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
+//         });
+//     });
+//     return 1;
+// })
 
-app.post('/boards/boardcontent/edittag/:boardID', (req, res) => {
+///   route này đã được xử lý trong socket
+// app.post('/boards/boardcontent/edittag/:boardID', (req, res) => {
 
-    const tagID = req.body.tagID;
-    const tagContent = req.body.tagContent;
-    const boardID = req.params.boardID;
-    // console.log(boardID);
+//     const tagID = req.body.tagID;
+//     const tagContent = req.body.tagContent;
+//     const boardID = req.params.boardID;
+//     // console.log(boardID);
 
-    const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
-    tagRef.once('value', snapshot => {
+//     const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
+//     tagRef.once('value', snapshot => {
 
-        // console.log(snapshot.val());
-        if (snapshot.val() === null)
-            return res.status(500).send({ mesg: 'Modify failed' });
+//         // console.log(snapshot.val());
+//         if (snapshot.val() === null)
+//             return res.status(500).send({ mesg: 'Modify failed' });
 
-        snapshot.forEach(underSnap => { // only one child but need loop
-            if (underSnap.val().boardID !== boardID)
-                return res.status(500).send({ mesg: 'Modify failed' });
-            underSnap.ref.update({ tagContent });
-            return 1;
-        });
-        return res.status(200).send({ mesg: 'Modify successfully', tagContent });
-    })
-    return 1;
-})
+//         snapshot.forEach(underSnap => { // only one child but need loop
+//             if (underSnap.val().boardID !== boardID)
+//                 return res.status(500).send({ mesg: 'Modify failed' });
+//             underSnap.ref.update({ tagContent });
+//             return 1;
+//         });
+//         return res.status(200).send({ mesg: 'Modify successfully', tagContent });
+//     })
+//     return 1;
+// })
 
-app.post('/boards/boardcontent/dragdrop/:boardID', async (req, res) => {
+///   route này đã được xử lý trong socket
+// app.post('/boards/boardcontent/dragdrop/:boardID', async (req, res) => {
 
-    const tags = req.body.tags;
-    // console.log(tags);//[{}, {}, ...]
+//     const tags = req.body.tags;
+//     // console.log(tags);//[{}, {}, ...]
 
-    tags.forEach(tag => {
-        const tagRef = firebase.database().ref().child(`tags/${tag.tagID}`);
-        tagRef.once('value', snapshot => {
-            // console.log(snapshot.val()); // {...}
-            snapshot.ref.update(tag)
-        });
-    })
-    return res.status(200).send({ mesg: 'Modify successfully' });
+//     tags.forEach(tag => {
+//         const tagRef = firebase.database().ref().child(`tags/${tag.tagID}`);
+//         tagRef.once('value', snapshot => {
+//             // console.log(snapshot.val()); // {...}
+//             snapshot.ref.update(tag)
+//         });
+//     })
+//     return res.status(200).send({ mesg: 'Modify successfully' });
 
-    // const { tagID, oldType, newType, oldOrder, newOrder } = req.body;
-    // const boardID = req.params.boardID;
-
-    // const tagsSnapshot = await firebase.database().ref().child('tags').orderByChild('boardID').equalTo(boardID).once('value');
-    // if (tagsSnapshot.val() === null || tagsSnapshot.val() === undefined)
-    //     res.status(400).send("No tag exists");
-
-    // if (oldType === newType) {
-
-    // } else if (oldType !== newType) {
-
-    //     const tags = await Object.values(tagsSnapshot.val());
-    //     const tagsOfOldColumn = tags.filter((tag) => tag.colTypeID === oldType).sort((o1, o2) => o1.order - o2.order);
-    //     const tagsOfNewColumn = tags.filter((tag) => tag.colTypeID === newType).sort((o1, o2) => o1.order - o2.order);
-    //     const tagToDragDrop = tagsOfOldColumn.splice(oldOrder, 1)[0]; // remove target out of 'tagsOfOldColumn'
-
-    //     // console.log(tagsOfOldColumn);// [{},{},...] or []
-    //     // console.log(tagsOfNewColumn);// [{},{},...] or []
-    //     // console.log(tagToDragDrop);
-
-    //     //update order of tags of old column
-    //     for (let i = oldOrder; i < tagsOfOldColumn.length; i++) {
-    //         const newOrder = tagsOfOldColumn[i].order - 1;
-    //         tagsOfOldColumn[i].order = newOrder;
-    //         const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagsOfOldColumn[i].tagID);
-    //         tagRef.once('value').then(snapshot => {
-
-    //             if (snapshot.val() === null)
-    //                 return res.status(500).send({ mesg: 'Error' });
-
-    //             snapshot.forEach(underSnap => { // only one child but need loop
-    //                 underSnap.ref.update({ order: newOrder });
-    //             });
-    //         })
-    //     }
-
-    //     //update order of tags of new column
-    //     for (let i = newOrder; i < tagsOfNewColumn.length; i++) {
-    //         const newOrder = tagsOfNewColumn[i].order + 1;
-    //         tagsOfNewColumn[i].order = newOrder;
-    //         const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagsOfNewColumn[i].tagID);
-    //         tagRef.once('value').then(snapshot => {
-
-    //             if (snapshot.val() === null)
-    //                 return res.status(500).send({ mesg: 'Error' });
-
-    //             snapshot.forEach(underSnap => { // only one child but need loop 
-    //                 underSnap.ref.update({ order: newOrder });
-    //             });
-    //         })
-    //     }
-
-    //     // update the drag-droped tag
-    //     const tagToDragDropCopy = { ...tagToDragDrop, order: newOrder, colTypeID: newType }
-    //     const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
-    //     tagRef.once('value').then(async snapshot => {
-    //         if (snapshot.val() === null)
-    //             return res.status(500).send({ mesg: 'Error' });
-
-    //         snapshot.forEach(underSnap => { // only one child but need loop 
-    //             underSnap.ref.update({ ...tagToDragDropCopy });
-    //         });
-
-    //         //get all tags
-    //         const allTagsSnapshot = await firebase.database().ref().child('tags').orderByChild('boardID').equalTo(boardID).once('value');
-    //         const allTagsArray = (await allTagsSnapshot.val());
-    //         return res.status(200).send({ tags: Object.values(allTagsArray) });
-    //     });
-
-    // }
-
-    // const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
-    // tagRef.once('value', snapshot => {
-
-    //     // console.log(snapshot.val());
-    //     if (snapshot.val() === null)
-    //         return res.status(500).send({ mesg: 'Modify failed' });
-
-
-    //     snapshot.forEach(underSnap => { // only one child but need loop
-    //         if (underSnap.val().boardID !== boardID)
-    //             return res.status(500).send({ mesg: 'Modify failed' });
-    //         underSnap.ref.update({ tagContent });
-    //         return 1;
-    //     });
-    //     return res.status(200).send({ mesg: 'Modify successfully', tagContent });
-    // })
-    // return 1;
-})
+// })
 
 app.post('/boards/boardcontent/removetag/:boardID', (req, res) => {
     const boardID = req.params.boardID;
@@ -619,9 +613,72 @@ app.use((err, req, res, next) => {
     res.render('error');
 });
 
-app.listen(utils.port, () => {
+server.listen(utils.port, () => {
     console.log(`http://localhost:8000`);
 })
 
 // module.exports = app; // incorrect
 exports.app = functions.https.onRequest(app); //correct
+
+
+
+// create and use the facebook strategy
+// passport.use(new FacebookStrategy({
+//     clientID: utils.facebook_key,
+//     clientSecret: utils.facebook_secret,
+//     callbackURL: utils.callback_url,
+//     profileFields: ['id', 'displayName']
+// }, function (accessToken, refreshToken, profile, done) {
+//     console.log("facebook strategy " + accessToken);
+//     console.log('profile :'); console.log(profile);
+
+//     // User.findOne({ 'facebook.id' : profile.id }, function(err, user) {
+//     //     if (err)
+//     //         return done(err);
+//     //     // if the user is found, then log them in
+//     //     if (user) {
+//     //         return done(null, user); 
+//     //     } else {
+//     //         // if there is no user found with that facebook id, create them
+//     //         var newUser            = new User();
+//     //         // set all of the facebook information in our user model
+//     //         newUser.facebook.id    = profile.id; // set the users facebook id                   
+//     //         newUser.facebook.token = token; // we will save the token that facebook provides to the user                    
+//     //         newUser.facebook.name  = profile.name.givenName + ' ' + profile.name.familyName; // look at the passport user profile to see how names are returned
+//     //         newUser.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
+//     //         // save our user to the database
+//     //         newUser.save(function(err) {
+//     //             if (err)
+//     //                 throw err;
+//     //             // if successful, return the new user
+//     //             return done(null, newUser);
+//     //         });
+//     //     }
+
+//     // });
+//     return done(null, profile);
+// }
+// ));
+
+// app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] })
+// );
+
+// app.get('/auth/facebook/callback',
+//     passport.authenticate('facebook', {
+//         successRedirect: '/account',
+//         // failureRedirect: '/signIn'
+//     }));
+
+// app.get('/account', isLoggedIn, (req, res) => {
+//     console.log(req.user);
+//     res.status(200).send(req.user);
+// });
+
+
+// function isLoggedIn(req, res, next) {
+//     if (req.isAuthenticated()) {
+//         console.log("you are facebook-authenticated");
+//         return next();
+//     }
+//     res.redirect('/authenticate')
+// }

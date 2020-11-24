@@ -31,7 +31,7 @@ export default function FormDialog({ addBoard }) {
         }
         const userID = localStorage.getItem('userID');
         const token = window.localStorage.getItem('jwtToken')
-        fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/createboard/${userID}`, {
+        fetch(`http://localhost:8000/createboard/${userID}`, {
             method: 'POST',
             body: JSON.stringify({ boardName, description }),
             headers: {
@@ -53,8 +53,9 @@ export default function FormDialog({ addBoard }) {
                     // window.localStorage.setItem('jwtToken', result.token);
                     // window.localStorage.setItem('userID', result.id);
                     // window.localStorage.setItem('userName', result.name);
-                    // history.push("/dashboard");
                     handleClose();
+                    history.push('/dashboard/boardcontent/' + result.newBoard.boardID);
+
                 });
             } else if (res.status === 400) {// blank content
                 res.json().then(result => alert(result.mesg))

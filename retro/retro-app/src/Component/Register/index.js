@@ -56,7 +56,7 @@ export default function Register() {
             alert("Confirm password does not match")
             return;
         }
-        fetch('https://us-central1-retro-api-5be5b.cloudfunctions.net/app/register', {
+        fetch('http://localhost:8000/register', {
             method: 'POST',
             body: JSON.stringify({ userName, password, verifyPassword }),
             headers: {
@@ -91,7 +91,7 @@ export default function Register() {
     useEffect(() => {
         const jwtToken = window.localStorage.getItem('jwtToken');
         // const userID = window.localStorage.getItem('userID');
-        fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/authenticate`, {
+        fetch(`http://localhost:8000/authenticate`, {
             method: 'POST',
             // body: JSON.stringify({ newUserName }),
             headers: {

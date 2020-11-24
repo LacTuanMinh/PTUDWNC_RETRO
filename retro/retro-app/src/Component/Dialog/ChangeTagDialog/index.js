@@ -9,9 +9,27 @@ import EditIcon from '@material-ui/icons/Edit';
 import { IconButton } from '@material-ui/core';
 
 
-export default function ChangeTagDialog({ tags, tag, setTags }) {
+export default function ChangeTagDialog({ tags, tag, setTags, socket }) {
     const [open, setOpen] = useState(false);
     const [newTagContent, setNewTagContent] = useState(tag.tagContent);
+
+    useEffect(() => {
+        socket.on(`server_EditTag${tag.tagID}`, tagContent => {
+            // console.log(tagContent);
+            console.log(tags);
+            // const tagsCopy = ;
+            setTags(tags => tags.map(item => {
+                if (item.tagID !== tag.tagID)
+                    return item;
+                else {
+                    return { ...item, tagContent }
+                }
+            }));
+            setNewTagContent(tagContent)
+            console.log(tags);
+
+        });
+    }, [tag])
 
     const handleClickOpen = () => {
         setNewTagContent(tag.tagContent);
@@ -32,34 +50,38 @@ export default function ChangeTagDialog({ tags, tag, setTags }) {
             alert('Content is blank string');
             return;
         }
-        const res = await fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/boards/boardcontent/edittag/${tag.boardID}`, {
-            method: 'POST',
-            body: JSON.stringify({ tagContent: newTagContent, tagID: tag.tagID }),
-            headers: {
-                'Content-Type': 'application/json',
-                // Authorization: `Bearer ${token}`
-            }
-        });
 
-        const result = await res.json();
-        if (res.status === 200) {
-            // alert(result.mesg);
+        socket.emit("client_EditTag", { tagContent: newTagContent, tagID: tag.tagID });
+        handleClose();
 
-            //find tag and replace
-            const tagsCopy = tags.slice();
-            setTags(tagsCopy.map(item => {
-                if (item.tagID !== tag.tagID)
-                    return item;
-                else {
-                    return { ...item, tagContent: result.tagContent }
-                }
-            }));
-            setNewTagContent(result.tagContent)
-            handleClose();
-        } else if (res.status === 500) {
-            alert(result.mesg);
-            handleClose();
-        }
+        // const res = await fetch(`http://localhost:8000/boards/boardcontent/edittag/${tag.boardID}`, {
+        //     method: 'POST',
+        //     body: JSON.stringify({ tagContent: newTagContent, tagID: tag.tagID }),
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //         // Authorization: `Bearer ${token}`
+        //     }
+        // });
+
+        // const result = await res.json();
+        // if (res.status === 200) {
+        //     // alert(result.mesg);
+
+        //     //find tag and replace
+        //     const tagsCopy = tags.slice();
+        //     setTags(tagsCopy.map(item => {
+        //         if (item.tagID !== tag.tagID)
+        //             return item;
+        //         else {
+        //             return { ...item, tagContent: result.tagContent }
+        //         }
+        //     }));
+        //     setNewTagContent(result.tagContent)
+        //     handleClose();
+        // } else if (res.status === 500) {
+        //     alert(result.mesg);
+        //     handleClose();
+        // }
     }
 
     return (

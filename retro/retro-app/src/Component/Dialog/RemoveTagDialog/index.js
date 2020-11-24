@@ -50,8 +50,28 @@ const DialogActions = withStyles((theme) => ({
     },
 }))(MuiDialogActions);
 
-export default function CustomizedDialogs({ tag, tags, setTags }) {
+export default function CustomizedDialogs({ tag, tags, setTags, socket }) {
     const [open, setOpen] = useState(false);
+
+    // useEffect(() => {
+    //     socket.on("server_RemoveTag" + tag.tagID, tagContent => {
+    //         // console.log(tagContent);
+    //         console.log(tags);
+    //         // const tagsCopy = ;
+    //         setTags(tags => tags.map(item => {
+    //             if (item.tagID !== tag.tagID)
+    //                 return item;
+    //             else {
+    //                 return { ...item, tagContent }
+    //             }
+    //         }));
+    //         setNewTagContent(tagContent)
+    //         console.log(tags);
+
+    //     });
+    // }, [tag])
+
+
     const handleClickOpen = () => {
         setOpen(true);
     };
@@ -62,31 +82,44 @@ export default function CustomizedDialogs({ tag, tags, setTags }) {
 
     const handleRemoveTag = async (event) => {
         event.preventDefault();
-        const res = await fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/boards/boardcontent/removetag/${tag.boardID}`, {
-            method: 'POST',
-            body: JSON.stringify({ tagID: tag.tagID }),
-            headers: {
-                'Content-Type': 'application/json',
-                // Authorization: `Bearer ${token}`
-            }
-        });
 
-        const result = await res.json();
-        if (res.status === 200) {
-            // alert(result.mesg);
-            const tagsCopy = tags.slice();
-            const tagIDToRemove = result.tagID;
-            for (let i = 0; i < tagsCopy.length; i++) {
-                if (tagsCopy[i].tagID === tagIDToRemove) {
-                    tagsCopy.splice(i, 1);
-                    break;
-                }
-            }
-            setTags(tagsCopy);
-        }
-        else if (res.status === 500) {// authenticate thất bại tự trả 401
-            alert(result.mesg)
-        }
+        const tagsCopy = tags
+            .slice()
+            .filter(item => item.colTypeID === tag.colTypeID && item.order > tag.order)
+            .sort((o1, o2) => o1.order - o2.order);
+
+        // console.log(tagsCopy); ok
+        socket.emit("client_RemoveTag", { boardID: tag.boardID, tagIDToRemove: tag.tagID, affectedTags: tagsCopy });
+
+        // const res = await fetch(`http://localhost:8000/boards/boardcontent/removetag/${tag.boardID}`, {
+        //     method: 'POST',
+        //     body: JSON.stringify({ tagID: tag.tagID }),
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //         // Authorization: `Bearer ${token}`
+        //     }
+        // });
+
+        // const result = await res.json();
+        // if (res.status === 200) {
+        //     // alert(result.mesg);
+        //     const tagsCopy = tags.slice();
+        //     const tagIDToRemove = result.tagID;
+        //     for (let i = 0; i < tagsCopy.length; i++) {
+        //         if (tagsCopy[i].tagID === tagIDToRemove) {
+        //             tagsCopy.splice(i, 1);
+        //             break;
+        //         }
+        //     }
+
+        //     // const tagsCopy = tags.map((tag,index) =>{
+
+        //     // })
+        //     setTags(tagsCopy);
+        // }
+        // else if (res.status === 500) {// authenticate thất bại tự trả 401
+        //     alert(result.mesg)
+        // }
         setOpen(false);
     };
 

@@ -63,7 +63,7 @@ export default function CustomizedDialogs({ boardID, boardName, removeBoard }) {
     const handleRemoveBoard = (event) => {
         event.preventDefault();
         const token = window.localStorage.getItem('jwtToken')
-        fetch(`https://us-central1-retro-api-5be5b.cloudfunctions.net/app/removeboard/${boardID}`, {
+        fetch(`http://localhost:8000/removeboard/${boardID}`, {
             method: 'POST',
             body: JSON.stringify({ boardID }),
             headers: {
