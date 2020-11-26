@@ -51,11 +51,15 @@ const useStyles = makeStyles((theme) => ({
         paddingTop: theme.spacing(0),
     },
     tagContent: {
-        margin: theme.spacing(1, 0, 0),
-        padding: theme.spacing(1),
+        // margin: theme.spacing(1),
+        // padding: theme.spacing(1),
+        marginTop: '5px',
+        marginBottom: '5px',
         textAlign: 'left',
         boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)',
         borderRadius: '5px',
+        display: 'inline-block',
+        width: '100%',
     },
     paperLikeShadow: {
         boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)',
@@ -63,7 +67,7 @@ const useStyles = makeStyles((theme) => ({
 
 }));
 
-const socket = socketIOClient("http://localhost:8000");
+const socket = socketIOClient("https://my-retro-api.herokuapp.com");
 
 // this Tag component is used in Body component below
 function Tag({ tags, tag, index, setTags, color }) { // tags: toàn bộ tag cũa board
@@ -76,15 +80,21 @@ function Tag({ tags, tag, index, setTags, color }) { // tags: toàn bộ tag cũ
                     {...provided.dragHandleProps}
                     ref={provided.innerRef}
                 >
-                    <div className={classes.tagContent}
-                        style={{ backgroundColor: color, display: 'inline-block', width: '95%' }}>
-                        <div style={{ whiteSpace: "pre-wrap", wordWrap: 'break-word', float: 'left', width: '87%', fontSize: '18px', paddingTop: '5px', paddingBottom: '5px' }}>
+                    <div className={classes.tagContent} style={{ backgroundColor: color }}>
+
+                        <div style={{ paddingLeft: '10px', paddingRight: '5px', paddingTop: '10px', whiteSpace: "pre-wrap", wordWrap: 'break-word', float: 'left', width: '75%', fontSize: '18px' }}>
                             {tag.tagContent}
                         </div>
 
-                        <div style={{ float: 'left', width: '13%' }}>
+                        <div style={{ float: 'right', width: '20%' }}>
+                            {/* <div style={{ float: 'left' }}> */}
                             <ChangeTagDialog tag={tag} tags={tags} setTags={(tag) => setTags(tag)} socket={socket} />
+
+                            {/* </div> */}
+                            {/* <div style={{ float: 'right' }}> */}
                             <RemoveTagDialog tag={tag} tags={tags} setTags={(tag) => setTags(tag)} socket={socket} />
+
+                            {/* </div> */}
                         </div>
                     </div>
                 </div>
@@ -110,16 +120,10 @@ export default function Body({ boardID, columnType, tags, setTags }) {
 
     useEffect(() => {
         socket.on(`server_RemoveTag${boardID}`, (body) => {
-            const { tagIDToRemove, affectedTags } = body
-            console.log(tagIDToRemove);
-            console.log(affectedTags);
+            const { tagIDToRemove, affectedTags } = body;
 
             const affectedTagsID = affectedTags.map(item => item.tagID);
-            affectedTagsID.splice(affectedTags.length, 0, tagIDToRemove);
-            console.log(affectedTagsID);
-
-            // const tagsCopy = tags.filter(tag => !affectedTagsID.includes(tag.tagID));
-            // setTags(tagsCopy);
+            affectedTagsID.splice(affectedTags.length, 0, tagIDToRemove); // add the tagToRemove to affected tag id so we can also remove it later easily
 
             setTags(tags => {
                 const tagsCopy = tags.filter(tag => !affectedTagsID.includes(tag.tagID));
@@ -215,7 +219,7 @@ export default function Body({ boardID, columnType, tags, setTags }) {
 
         socket.emit("client_DragDrop", { tags: tagsModified.filter(e => e.colTypeID === oldType || e.colTypeID === newType) });
 
-        // const res = await fetch(`http://localhost:8000/boards/boardcontent/dragdrop/${boardID}`, {
+        // const res = await fetch(`https://my-retro-api.herokuapp.com/boards/boardcontent/dragdrop/${boardID}`, {
         //     method: 'POST',
         //     body: JSON.stringify({ tags: tagsModified.filter(e => e.colTypeID === oldType || e.colTypeID === newType) }),
         //     headers: {

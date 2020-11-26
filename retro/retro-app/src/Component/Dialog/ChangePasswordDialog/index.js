@@ -42,7 +42,7 @@ export default function FormDialog() {
 
         const userID = localStorage.getItem('userID');
         const token = window.localStorage.getItem('jwtToken')
-        fetch(`http://localhost:8000/profile/password/${userID}`, {
+        fetch(`https://my-retro-api.herokuapp.com/profile/password/${userID}`, {
             method: 'POST',
             body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
             headers: {

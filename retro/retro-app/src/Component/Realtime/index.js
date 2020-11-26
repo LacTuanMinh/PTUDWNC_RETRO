@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import socketIOClient from "socket.io-client";
 // import {socket } from '../BoardContent/index'
-const ENDPOINT = "http://localhost:8000";
+const ENDPOINT = "https://my-retro-api.herokuapp.com";
 function TimeCounter() {
   const [response, setResponse] = useState("");
 

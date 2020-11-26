@@ -56,7 +56,7 @@ export default function Register() {
             alert("Confirm password does not match")
             return;
         }
-        fetch('http://localhost:8000/register', {
+        fetch('https://my-retro-api.herokuapp.com/register', {
             method: 'POST',
             body: JSON.stringify({ userName, password, verifyPassword }),
             headers: {
@@ -91,7 +91,7 @@ export default function Register() {
     useEffect(() => {
         const jwtToken = window.localStorage.getItem('jwtToken');
         // const userID = window.localStorage.getItem('userID');
-        fetch(`http://localhost:8000/authenticate`, {
+        fetch(`https://my-retro-api.herokuapp.com/authenticate`, {
             method: 'POST',
             // body: JSON.stringify({ newUserName }),
             headers: {

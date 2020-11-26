@@ -70,7 +70,7 @@ export default function SignIn() {
     useEffect(() => {
         const jwtToken = window.localStorage.getItem('jwtToken');
         // const userID = window.localStorage.getItem('userID');
-        fetch(`http://localhost:8000/authenticate`, {
+        fetch(`https://my-retro-api.herokuapp.com/authenticate`, {
             method: 'POST',
             // body: JSON.stringify({ newUserName }),
             headers: {
@@ -91,7 +91,7 @@ export default function SignIn() {
         event.preventDefault();
         // const jwtToken = window.localStorage.getItem('jwtToken');
         // const token = "Bearer " + jwtToken;
-        fetch('http://localhost:8000/signIn', {
+        fetch('https://my-retro-api.herokuapp.com/signIn', {
             method: 'POST',
             body: JSON.stringify({ userName, password }),
             headers: {
@@ -124,7 +124,7 @@ export default function SignIn() {
 
     // const handleFaceBookLogin = async (event) => {
     //     event.preventDefault();
-    //     const res = await fetch('http://localhost:8000/auth/facebook', {
+    //     const res = await fetch('https://my-retro-api.herokuapp.com/auth/facebook', {
     //         method: 'GET',
     //         // credentials: "include",
     //         headers: {
@@ -186,7 +186,7 @@ export default function SignIn() {
 
                         {/* <Button onClick={handleFaceBookLogin} class="fb-login-button" data-size="large" data-button-type="login_with" data-layout="default" data-use-continue-as="true" data-width=" "></Button>
 
-                        <a href="http://localhost:8000/auth/facebook">
+                        <a href="https://my-retro-api.herokuapp.com/auth/facebook">
                             Sign in with facebook
                             </a> */}
                         <Grid container style={{ margin: '15px', alignContent: 'center' }}>

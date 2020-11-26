@@ -21,7 +21,7 @@ export default function BoardContent(props) {
 
         async function fetchData() {
             const boardID = props.match.params.boardid;
-            const res = await fetch(`http://localhost:8000/boards/boardcontent/${boardID}`, {
+            const res = await fetch(`https://my-retro-api.herokuapp.com/boards/boardcontent/${boardID}`, {
                 method: 'GET'
             });
             const result = await res.json();

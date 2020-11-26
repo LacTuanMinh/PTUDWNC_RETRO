@@ -91,7 +91,7 @@ export default function CustomizedDialogs({ tag, tags, setTags, socket }) {
         // console.log(tagsCopy); ok
         socket.emit("client_RemoveTag", { boardID: tag.boardID, tagIDToRemove: tag.tagID, affectedTags: tagsCopy });
 
-        // const res = await fetch(`http://localhost:8000/boards/boardcontent/removetag/${tag.boardID}`, {
+        // const res = await fetch(`https://my-retro-api.herokuapp.com/boards/boardcontent/removetag/${tag.boardID}`, {
         //     method: 'POST',
         //     body: JSON.stringify({ tagID: tag.tagID }),
         //     headers: {

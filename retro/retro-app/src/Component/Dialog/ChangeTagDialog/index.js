@@ -54,7 +54,7 @@ export default function ChangeTagDialog({ tags, tag, setTags, socket }) {
         socket.emit("client_EditTag", { tagContent: newTagContent, tagID: tag.tagID });
         handleClose();
 
-        // const res = await fetch(`http://localhost:8000/boards/boardcontent/edittag/${tag.boardID}`, {
+        // const res = await fetch(`https://my-retro-api.herokuapp.com/boards/boardcontent/edittag/${tag.boardID}`, {
         //     method: 'POST',
         //     body: JSON.stringify({ tagContent: newTagContent, tagID: tag.tagID }),
         //     headers: {

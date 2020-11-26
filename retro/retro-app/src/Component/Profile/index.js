@@ -55,7 +55,7 @@ export default function SignIn() {
     useEffect(() => {
         const jwtToken = window.localStorage.getItem('jwtToken');
         // const userID = window.localStorage.getItem('userID');
-        fetch(`http://localhost:8000/authenticate`, {
+        fetch(`https://my-retro-api.herokuapp.com/authenticate`, {
             method: 'POST',
             // body: JSON.stringify({ newUserName }),
             headers: {
@@ -81,7 +81,7 @@ export default function SignIn() {
         }
         const userID = localStorage.getItem('userID');
         const token = window.localStorage.getItem('jwtToken')
-        fetch(`http://localhost:8000/profile/username/${userID}`, {
+        fetch(`https://my-retro-api.herokuapp.com/profile/username/${userID}`, {
             method: 'POST',
             body: JSON.stringify({ newUserName }),
             headers: {

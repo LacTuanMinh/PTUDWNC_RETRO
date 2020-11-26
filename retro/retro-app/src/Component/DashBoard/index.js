@@ -87,7 +87,7 @@ export default function Dashboard() {
     const jwtToken = window.localStorage.getItem('jwtToken');
     const userID = window.localStorage.getItem('userID');
     const token = "Bearer " + jwtToken;
-    fetch(`http://localhost:8000/boards/${userID}`, {
+    fetch(`https://my-retro-api.herokuapp.com/boards/${userID}`, {
       method: 'GET',
       headers: {
         Authorization: token,

@@ -93,6 +93,7 @@ io.on("connection", (socket) => {
             tagRef.once('value', snapshot => {
                 // console.log(snapshot.val()); // {...}
                 snapshot.ref.update(tag)
+                return 1;
             });
         });
 
@@ -144,9 +145,11 @@ io.on("connection", (socket) => {
             newTagRef.child(tagPusher.key).update({ tagID: tagPusher.key }).then(() => {
                 newTag.tagID = tagPusher.key;
                 io.sockets.emit("server_AddTag" + boardID + colTypeID, newTag);
+                return 1;
                 // return res.status(200).send({ mesg: "Add tag successfully", newTag });
             }).catch((err) => {
                 console.log(err);
+                return 1;
                 // return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
             });
         });
@@ -169,9 +172,11 @@ io.on("connection", (socket) => {
             snapshot.forEach(underSnap => { // only one child but need loop
                 // if (underSnap.val().boardID !== boardID)
                 //     return res.status(500).send({ mesg: 'Modify failed' });
-                underSnap.ref.update({ tagContent }).then(() => { });
+                underSnap.ref.update({ tagContent })
+                    .then(() => { return 1; })
+                    .catch((err) => { console.log(err); return 1; });
                 io.sockets.emit("server_EditTag" + underSnap.val().tagID, tagContent)
-
+                return 1;
             });
             // return res.status(200).send({ mesg: 'Modify successfully', tagContent });
         })
@@ -188,7 +193,10 @@ io.on("connection", (socket) => {
 
             // console.log(snapshot.val());
             snapshot.ref.remove().then(() => {
-                return null;
+                return 1;
+            }).catch((err) => {
+                console.log(err);
+                return 1;
             });
 
         });
@@ -438,34 +446,36 @@ app.post('/boards/boardcontent/changedescription/:boardID', (req, res) => {
 
 // })
 
-app.post('/boards/boardcontent/removetag/:boardID', (req, res) => {
-    const boardID = req.params.boardID;
-    const tagID = req.body.tagID;
-    // console.log(boardID);
 
-    const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
-    tagRef.once('value', snapshot => {
+///   route này đã được xử lý trong socket
+// app.post('/boards/boardcontent/removetag/:boardID', (req, res) => {
+//     const boardID = req.params.boardID;
+//     const tagID = req.body.tagID;
+//     // console.log(boardID);
 
-        // console.log(snapshot.val());
-        if (snapshot.val() === null)
-            return res.status(500).send({ mesg: 'Remove failed' });
+//     const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
+//     tagRef.once('value', snapshot => {
 
-        snapshot.forEach(underSnap => {
-            if (underSnap.val().boardID !== boardID)
-                return res.status(500).send({ mesg: 'Remove failed' });
+//         // console.log(snapshot.val());
+//         if (snapshot.val() === null)
+//             return res.status(500).send({ mesg: 'Remove failed' });
 
-            underSnap.ref.remove().then(() => {
-                return res.status(200).send({ mesg: 'Remove successfully', tagID });
-            }).catch((err) => {
-                console.log(err);
-                return res.status(500).send({ mesg: 'Remove failed' });
-            });
-            return 1;
-        })
-        return 1;
-    });
-    return 1;
-})
+//         snapshot.forEach(underSnap => {
+//             if (underSnap.val().boardID !== boardID)
+//                 return res.status(500).send({ mesg: 'Remove failed' });
+
+//             underSnap.ref.remove().then(() => {
+//                 return res.status(200).send({ mesg: 'Remove successfully', tagID });
+//             }).catch((err) => {
+//                 console.log(err);
+//                 return res.status(500).send({ mesg: 'Remove failed' });
+//             });
+//             return 1;
+//         })
+//         return 1;
+//     });
+//     return 1;
+// })
 
 // this middleware protect all routes below it
 app.use(passport.authenticate("jwt", { session: false }));
@@ -617,8 +627,8 @@ server.listen(utils.port, () => {
     console.log(`http://localhost:8000`);
 })
 
-// module.exports = app; // incorrect
-exports.app = functions.https.onRequest(app); //correct
+module.exports = app; // incorrect
+// exports.app = functions.https.onRequest(app); //correct
 
 
 

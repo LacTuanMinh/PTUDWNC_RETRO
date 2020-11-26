@@ -44,7 +44,7 @@ export default function CreateTagDialog({ boardID, colTypeID, tags, setTags, soc
         socket.emit("client_AddTag", { tagContent, colTypeID, boardID });
         handleClose();
 
-        // const res = await fetch(`http://localhost:8000/boards/boardcontent/addtag/${boardID}`, {
+        // const res = await fetch(`https://my-retro-api.herokuapp.com/boards/boardcontent/addtag/${boardID}`, {
         //     method: 'POST',
         //     body: JSON.stringify({ tagContent, colTypeID }),
         //     headers: {

@@ -44,7 +44,7 @@ export default function Inputs({ board, setBoard }) {
                 return;
             }
             const boardID = board.boardID;
-            const res = await fetch(`http://localhost:8000/boards/boardcontent/changename/${boardID}`, {
+            const res = await fetch(`https://my-retro-api.herokuapp.com/boards/boardcontent/changename/${boardID}`, {
                 method: 'POST',
                 body: JSON.stringify({ newBoardName }),
                 headers: {
@@ -70,7 +70,7 @@ export default function Inputs({ board, setBoard }) {
         event.preventDefault()
         async function updateDescription() {
             const boardID = board.boardID;
-            const res = await fetch(`http://localhost:8000/boards/boardcontent/changedescription/${boardID}`, {
+            const res = await fetch(`https://my-retro-api.herokuapp.com/boards/boardcontent/changedescription/${boardID}`, {
                 method: 'POST',
                 body: JSON.stringify({ newDesc }),
                 headers: {

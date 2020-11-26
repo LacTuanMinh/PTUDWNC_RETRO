@@ -31,7 +31,7 @@ export default function FormDialog({ addBoard }) {
         }
         const userID = localStorage.getItem('userID');
         const token = window.localStorage.getItem('jwtToken')
-        fetch(`http://localhost:8000/createboard/${userID}`, {
+        fetch(`https://my-retro-api.herokuapp.com/createboard/${userID}`, {
             method: 'POST',
             body: JSON.stringify({ boardName, description }),
             headers: {
