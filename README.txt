@@ -1,8 +1,7 @@
 API: đã init theo dạng function. Lần sau chỉ cần chạy firebase deploy để upddate
 	lưu ý: sử dụng bcryptjs chứ ko phải bcrypt, nếu ko thì bị 'firebase function failed on loading user code'
 
-hello
-
+*update: Api có thêm chức năng realtime dc deploy trên heroku
 
 
 App: đã init theo dạng hosting
