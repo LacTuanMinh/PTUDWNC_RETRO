@@ -1,6 +1,0 @@
-{
-  "users" : [{ "userID": int , "userName": string ,"password": string , "boardList" : [boardID] }],
-  "boards" : [{ " boardID": int , "boardName": string , "description": string }],
-  "columnType": [{ "colTypeID": int , "colTypeName": string }],
-  "tags": [{ "tagID": int , "colTypeID": int , "boardID": int , "tagContent": string }]
-}

@@ -1,4 +1,3 @@
-const functions = require('firebase-functions');
 const firebase = require('firebase');
 const createError = require('http-errors');
 const express = require('express');
@@ -34,17 +33,16 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors({ origin: '*' }));
 
-// middleware check firebase has been init-ed
-
-
+// create jwt strategy
 const ExtractJwt = passportJWT.ExtractJwt;
 const JwtStrategy = passportJWT.Strategy;
 const jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = utils.secretKey;
-// create jwt strategy
 let JWT_strategy = new JwtStrategy(jwtOptions, (jwt_payload, next) => {
+
     console.log('You access jwtstrategy. userID : ' + jwt_payload.id);
+
     const user = firebase.database().ref().child('users').orderByChild('userID').equalTo(jwt_payload.id);
     user.once('value', snapshot => {
         // console.log(snapshot.val());
@@ -67,6 +65,7 @@ const server = http.Server(app);
 const io = socketIo(server, {
     cors: {
         origin: "*",
+        methods: ["GET", "POST"]
     }
 });
 
@@ -79,14 +78,9 @@ app.use(async (req, res, next) => {
 
 io.on("connection", (socket) => {
     console.log("New client connected: ", socket.id);
-    // if (interval) {
-    //     clearInterval(interval);
-    // }
-    // interval = setInterval(() => getApiAndEmit(socket), 1000);
 
     socket.on("client_DragDrop", async (body) => {
-        console.log("socket drag drop");
-        // console.log(body.tags);
+
         const tags = body.tags;
         tags.forEach(tag => {
             const tagRef = firebase.database().ref().child(`tags/${tag.tagID}`);
@@ -105,13 +99,6 @@ io.on("connection", (socket) => {
 
     socket.on("client_AddTag", (body) => {
 
-        // console.log("source : " + socket.id);
-        // server.getConnections(function (error, count) {
-        //     console.log('Total:' + count);
-        // });
-        // if (utils.isBlankString(req.body.tagContent)) {
-        //     return res.status(400).send({ mesg: 'Tag content cannot be empty' });
-        // }
         const boardID = body.boardID;
         const tagContent = body.tagContent;
         const colTypeID = body.colTypeID;
@@ -159,15 +146,10 @@ io.on("connection", (socket) => {
 
         const tagID = body.tagID;
         const tagContent = body.tagContent;
-        // const boardID = req.params.boardID;
-        // console.log(boardID);
 
         const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
         tagRef.once('value', snapshot => {
 
-            // console.log(snapshot.val());
-            // if (snapshot.val() === null)
-            //     return res.status(500).send({ mesg: 'Modify failed' });
 
             snapshot.forEach(underSnap => { // only one child but need loop
                 // if (underSnap.val().boardID !== boardID)
@@ -180,18 +162,14 @@ io.on("connection", (socket) => {
             });
             // return res.status(200).send({ mesg: 'Modify successfully', tagContent });
         })
-        // return 1;
-
     })
 
     socket.on("client_RemoveTag", (body) => {
 
-        // console.log(body);
         const { tagIDToRemove, affectedTags, boardID } = body;
         const tagRef = firebase.database().ref().child(`tags/${tagIDToRemove}`);
         tagRef.once('value', snapshot => {
 
-            // console.log(snapshot.val());
             snapshot.ref.remove().then(() => {
                 return 1;
             }).catch((err) => {
@@ -220,11 +198,9 @@ io.on("connection", (socket) => {
     });
 });
 
-
 app.get('/', (req, res) => {
     res.send('home');
-})
-
+});
 
 app.post('/signIn', (req, res) => {
 
@@ -232,8 +208,7 @@ app.post('/signIn', (req, res) => {
     user.once('value', snapshot => {
         if (snapshot.exists()) {
             snapshot.forEach(child => {
-                // console.log(child.val())                    
-                // console.log(child.val().userID)
+
                 if (bcrypt.compareSync(req.body.password, child.val().password)) {
                     const token = jwt.sign({ id: child.val().userID }, jwtOptions.secretOrKey);
                     return res.status(200).send({ mesg: "Signed in", token: token, id: child.val().userID, name: child.val().userName });
@@ -249,8 +224,7 @@ app.post('/signIn', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-    // console.log(req.body.userName);
-    // console.log(req.body.password);
+
     const userName = req.body.userName;
     const password = req.body.password;
     const verifyPassword = req.body.verifyPassword
@@ -351,132 +325,6 @@ app.post('/boards/boardcontent/changedescription/:boardID', (req, res) => {
     return 1;
 })
 
-///   route này đã được xử lý trong socket
-// app.post('/boards/boardcontent/addtag/:boardID', (req, res) => {
-//     // console.log(req.params.boardID);
-//     // console.log(req.body);
-
-//     if (utils.isBlankString(req.body.tagContent)) {
-//         return res.status(400).send({ mesg: 'Tag content cannot be empty' });
-//     }
-
-//     const boardID = req.params.boardID;
-//     const tagContent = req.body.tagContent;
-//     const colTypeID = req.body.colTypeID;
-
-//     const tagRef = firebase.database().ref().child('tags').orderByChild('boardID').equalTo(boardID);
-//     tagRef.once('value', snapshot => {
-//         // console.log(snapshot.val());
-
-//         let order = 0;
-
-//         if (snapshot.val() !== null) {
-//             const arrayTags = Object.values(snapshot.val());
-//             const tagsOfCol = arrayTags.filter(tag => tag.colTypeID === colTypeID).sort((o1, o2) => o1.order - o2.order);
-//             if (tagsOfCol.length !== 0)
-//                 order = (tagsOfCol[tagsOfCol.length - 1]).order + 1;
-//         }
-//         // console.log(order);
-//         const newTagRef = firebase.database().ref().child('tags');
-//         const tagPusher = newTagRef.push();
-//         const newTag = {
-//             boardID,
-//             tagContent,
-//             colTypeID,
-//             order
-//         };
-//         // thêm tag mới mà chưa có id
-//         tagPusher.set(newTag).catch((err) => {
-//             console.log(err);
-//             return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
-//         });
-
-//         // lấy key phát sinh set làm id của tag
-//         newTagRef.child(tagPusher.key).update({ tagID: tagPusher.key }).then(() => {
-//             newTag.tagID = tagPusher.key;
-//             return res.status(200).send({ mesg: "Add tag successfully", newTag });
-//         }).catch((err) => {
-//             console.log(err);
-//             return res.status(500).send({ mesg: 'Fail to add tag! Try again' })
-//         });
-//     });
-//     return 1;
-// })
-
-///   route này đã được xử lý trong socket
-// app.post('/boards/boardcontent/edittag/:boardID', (req, res) => {
-
-//     const tagID = req.body.tagID;
-//     const tagContent = req.body.tagContent;
-//     const boardID = req.params.boardID;
-//     // console.log(boardID);
-
-//     const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
-//     tagRef.once('value', snapshot => {
-
-//         // console.log(snapshot.val());
-//         if (snapshot.val() === null)
-//             return res.status(500).send({ mesg: 'Modify failed' });
-
-//         snapshot.forEach(underSnap => { // only one child but need loop
-//             if (underSnap.val().boardID !== boardID)
-//                 return res.status(500).send({ mesg: 'Modify failed' });
-//             underSnap.ref.update({ tagContent });
-//             return 1;
-//         });
-//         return res.status(200).send({ mesg: 'Modify successfully', tagContent });
-//     })
-//     return 1;
-// })
-
-///   route này đã được xử lý trong socket
-// app.post('/boards/boardcontent/dragdrop/:boardID', async (req, res) => {
-
-//     const tags = req.body.tags;
-//     // console.log(tags);//[{}, {}, ...]
-
-//     tags.forEach(tag => {
-//         const tagRef = firebase.database().ref().child(`tags/${tag.tagID}`);
-//         tagRef.once('value', snapshot => {
-//             // console.log(snapshot.val()); // {...}
-//             snapshot.ref.update(tag)
-//         });
-//     })
-//     return res.status(200).send({ mesg: 'Modify successfully' });
-
-// })
-
-
-///   route này đã được xử lý trong socket
-// app.post('/boards/boardcontent/removetag/:boardID', (req, res) => {
-//     const boardID = req.params.boardID;
-//     const tagID = req.body.tagID;
-//     // console.log(boardID);
-
-//     const tagRef = firebase.database().ref().child('tags').orderByChild('tagID').equalTo(tagID);
-//     tagRef.once('value', snapshot => {
-
-//         // console.log(snapshot.val());
-//         if (snapshot.val() === null)
-//             return res.status(500).send({ mesg: 'Remove failed' });
-
-//         snapshot.forEach(underSnap => {
-//             if (underSnap.val().boardID !== boardID)
-//                 return res.status(500).send({ mesg: 'Remove failed' });
-
-//             underSnap.ref.remove().then(() => {
-//                 return res.status(200).send({ mesg: 'Remove successfully', tagID });
-//             }).catch((err) => {
-//                 console.log(err);
-//                 return res.status(500).send({ mesg: 'Remove failed' });
-//             });
-//             return 1;
-//         })
-//         return 1;
-//     });
-//     return 1;
-// })
-
 // this middleware protect all routes below it
 app.use(passport.authenticate("jwt", { session: false }));
 
@@ -486,8 +334,7 @@ app.post('/authenticate', (req, res) => {
 })
 
 app.post('/profile/username/:userID', (req, res) => {
-    // console.log(req.body.newUserName)
-    // console.log(req.params.userID)
+
     const user = firebase.database().ref().child('users').orderByChild('userID').equalTo(req.params.userID);
     user.once('value', snapshot => {
         if (snapshot.val() === null) {
@@ -504,10 +351,6 @@ app.post('/profile/username/:userID', (req, res) => {
 })
 
 app.post('/profile/password/:userID', (req, res) => {
-    // console.log(req.body.newPassword)
-    // console.log(req.body.confirmPassword)
-    // console.log(req.body.currentPassword)
-    // console.log(req.params.userID)
 
     if (req.body.newPassword !== req.body.confirmPassword)
         return res.status(400).send({ mesg: 'Confirm password does not match' })
@@ -623,7 +466,8 @@ app.use((err, req, res, next) => {
     res.render('error');
 });
 
-server.listen(utils.port, () => {
+//PORT not port
+server.listen(Number(process.env.PORT || utils.port), '0.0.0.0', () => {
     console.log(`http://localhost:8000`);
 })
 
